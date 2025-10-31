@@ -329,16 +329,16 @@ module.exports = sock = async (sock, m, chatUpdate, store) => {
                 const totalCommands = pluginLoader.getPluginCount();
 
                 const K0MRAID = `
-╔〘 *WA-BASE-BOT* 
-║ 👑 *Owner:* Debraj 
-║ 🧩 *Prefix:* [ . ]
+╔〘 *༺𝕿𝖍𝖊 𝕴𝖑𝖙𝖎𝖒𝖆𝖙𝖚𝖒༻* 
+║ 👑 *Owner:* ༺𝕷𝖔𝖜𝖐𝖊𝖞 𝕴𝖘 𝕳𝖎𝖒༻ᵀʰᵉ ᵁˡᵗᶦᵐᵃᵗᵘᵐ
+║ 🧩 *Prefix:* [ ${prefix} ]
 ║ 🖥️ *Host:* ${host}
-║ 🧠 *Commands:* ${totalCommands}
+║ 🧠*Commands:* ${totalCommands}
 ║ ⚙️ *Mode:* ${mode}
-║ ⏱️ *Uptime:* ${uptime}
+║ ⏳️ *Uptime:* ${uptime}
 ║ ⚡ *Ping:* ${ping.toFixed(0)} ms
 ║ 📊 *RAM Used:* ${usedMem.toFixed(2)} MB / ${totalMem.toFixed(2)} GB
-║ 🧬 *RAM:* [${ramBar}] ${memPercent.toFixed(2)}%
+║ 🚀 *RAM:* [${ramBar}] ${memPercent.toFixed(2)}%
 ╚═〘 *System Status*
 
 ${pluginMenuSections}`;
@@ -385,4 +385,5 @@ require('fs').watchFile(file, () => {
     console.log('\x1b[0;32m' + __filename + ' \x1b[1;32mupdated!\x1b[0m');
     delete require.cache[file];
     require(file);
+
 });
