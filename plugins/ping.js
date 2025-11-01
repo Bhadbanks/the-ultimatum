@@ -20,8 +20,7 @@ module.exports = {
         isGroupOwner,
         isCreator,
         prefix,
-        reply,
-        config
+        reply
     }) => {
         const start = Date.now();
         await reply('🏓 Pong!');
