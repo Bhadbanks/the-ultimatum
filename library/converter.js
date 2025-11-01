@@ -1,8 +1,3 @@
-
-// © 2025 Debraj. All Rights Reserved.
-// respect the work, don’t just copy-paste.
-
-const fs = require('fs')
 const path = require('path')
 const { spawn } = require('child_process')
 
