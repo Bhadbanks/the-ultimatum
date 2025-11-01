@@ -1,7 +1,3 @@
-
-// © 2025 Debraj. All Rights Reserved.
-// respect the work, don’t just copy-paste.
-
 const config = require('../settings/config');
 const fetch = require('node-fetch')
 
