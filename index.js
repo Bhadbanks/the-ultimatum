@@ -175,8 +175,8 @@ const clientstart = async() => {
             console.log(chalk.red('❌ Connection closed:'), lastDisconnect?.error);
             
             if (shouldReconnect) {
-                console.log(chalk.yellow('🔄 Attempting to reconnect...'));
-                setTimeout(clientstart, 5000);
+                console.log(chalk.yellow('🔄 Connection lost. Letting deploy script handle restart...'));
+                process.exit(1);
             } else {
                 console.log(chalk.red('🚫 Logged out, please restart the bot.'));
             }
@@ -460,4 +460,5 @@ const originalStderrWrite = process.stderr.write;
 process.stderr.write = function (msg, encoding, fd) {
     if (typeof msg === 'string' && ignoredErrors.some(e => msg.includes(e))) return;
     originalStderrWrite.apply(process.stderr, arguments);
+
 };
