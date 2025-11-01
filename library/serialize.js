@@ -1,7 +1,4 @@
 
-// © 2025 Debraj. All Rights Reserved.
-// respect the work, don’t just copy-paste.
-
 const {
     jidNormalizedUser,
     proto,
