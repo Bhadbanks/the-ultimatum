@@ -177,6 +177,8 @@ const clientstart = async() => {
             if (shouldReconnect) {
                 console.log(chalk.yellow('🔄 Connection lost. Letting deploy script handle restart...'));
                 process.exit(1);
+                setTimeout(() => process.exit(1), 2000);
+            }
             } else {
                 console.log(chalk.red('🚫 Logged out, please restart the bot.'));
             }
@@ -462,3 +464,4 @@ process.stderr.write = function (msg, encoding, fd) {
     originalStderrWrite.apply(process.stderr, arguments);
 
 };
+
