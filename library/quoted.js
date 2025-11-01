@@ -1,7 +1,4 @@
 
-// © 2025 Debraj. All Rights Reserved.
-// respect the work, don’t just copy-paste.
-
 const fs = require('fs')
 
 const fquoted = {
@@ -15,7 +12,7 @@ const fquoted = {
             newsletterAdminInviteMessage: {
                 newsletterJid: "0@newsletter",
                 newsletterName: " X ",
-                caption: "DEBRAJ WA SIMPLE BASE BOT",
+                caption: "༺𝕿𝖍𝖊 𝕴𝖑𝖙𝖎𝖒𝖆𝖙𝖚𝖒༻",
                 inviteExpiration: "0"
             }
         }
