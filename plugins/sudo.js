@@ -1,9 +1,9 @@
 const { rmComma, jidToNum, getVars, setVar } = require('../library/function');
 
 module.exports = {
-    name: "sudo",
-    description: "Manage sudo users",
-    category: "✨️MISC"
+    name: 'sudo',
+    description: 'Manage sudo users',
+    category: '✨️MISC'
         async execute(sock, m, args) {
         const messageText = m.text || "";
         const fromMe = m.key.fromMe; // check if the sender is the bot owner
