@@ -3,7 +3,8 @@ const { rmComma, jidToNum, getVars, setVar } = require('../library/function');
 module.exports = {
     name: "sudo",
     description: "Manage sudo users",
-    async execute(sock, m, args) {
+    category: "✨️MISC"
+        async execute(sock, m, args) {
         const messageText = m.text || "";
         const fromMe = m.key.fromMe; // check if the sender is the bot owner
         const quotedJid = m.quoted ? m.quoted.sender : null;
