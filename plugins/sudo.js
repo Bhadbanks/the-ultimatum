@@ -1,58 +1,51 @@
-const { rmComma, jidToNum, getVars, setVar } = require("../library/function");
+const fs = require('fs');
+const path = require('path');
+
+const ownerFile = path.join(__dirname, '../library/database/owner.json');
+
+// Ensure owner.json exists
+if (!fs.existsSync(ownerFile)) {
+  fs.writeFileSync(ownerFile, JSON.stringify({ SUDO: [] }, null, 2));
+}
+
+// Helper functions
+function loadSudo() {
+  try {
+    const data = JSON.parse(fs.readFileSync(ownerFile, 'utf-8'));
+    return Array.isArray(data.SUDO) ? data.SUDO : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSudo(list) {
+  fs.writeFileSync(ownerFile, JSON.stringify({ SUDO: list }, null, 2));
+}
 
 module.exports = {
-    command: "sudo",
-    category: "owner",
-    description: "Manage bot SUDO users (setsudo, delsudo, getsudo)",
-    owner: true, // only bot owner can use
-    async execute(sock, m, { args, reply, isCreator }) {
-        try {
-            const subCmd = (args[0] || "").toLowerCase();
-            const target =
-                jidToNum(
-                    m.quoted?.sender ||
-                    m.mentionedJid?.[0] ||
-                    args[1]
-                );
+  command: 'setsudo',
+  category: 'owner',
+  description: 'Add a user as SUDO (reply, mention, or number)',
+  async execute(sock, m, { text, reply, isCreator }) {
+    if (!isCreator) return reply('Only owner can use this command.');
 
-            // Load vars
-            const vars = await getVars(m.id);
-            let sudoList = vars.SUDO || "";
+    const input =
+      m.quoted?.sender ||
+      (m.mentionedJid && m.mentionedJid[0]) ||
+      text.replace(/[^0-9]/g, '');
 
-            switch (subCmd) {
-                case "add":
-                case "set":
-                case "setsudo": {
-                    if (!isCreator) return; // only owner
-                    if (!target)
-                        return reply("📌 Example:\n.sudo add 9876543210\nor reply/mention the user.");
-                    const SUDO = rmComma(`${sudoList},${target}`);
-                    await setVar({ SUDO }, m.id);
-                    return reply(`✅ Added new sudo user.\n\n*Current SUDO:* ${SUDO}`);
-                }
+    if (!input) return reply('Usage: .setsudo @user or reply to a message');
 
-                case "del":
-                case "remove":
-                case "delsudo": {
-                    if (!isCreator) return;
-                    if (!target)
-                        return reply("📌 Example:\n.sudo del 9876543210\nor reply/mention the user.");
-                    const SUDO = rmComma(sudoList.replace(target, ""));
-                    await setVar({ SUDO }, m.id);
-                    return reply(`❌ Removed sudo user.\n\n*Current SUDO:* ${SUDO}`);
-                }
+    const number = input.replace(/[^0-9]/g, '');
+    if (!number) return reply('Invalid number.');
 
-                case "list":
-                case "get":
-                case "getsudo":
-                default: {
-                    if (!sudoList) return reply("⚠️ No sudo users found.");
-                    return reply(`🗿 *SUDO Users:*\n${sudoList.split(",").join("\n")}`);
-                }
-            }
-        } catch (err) {
-            console.error(err);
-            reply(`❌ Error: ${err.message}`);
-        }
-    },
+    const sudoList = loadSudo();
+
+    if (sudoList.includes(number)) return reply(`User ${number} is already a SUDO.`);
+
+    sudoList.push(number);
+    saveSudo(sudoList);
+
+    reply(`✅ Added *${number}* to SUDO list.`);
+  },
 };
