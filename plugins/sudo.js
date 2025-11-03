@@ -1,45 +1,58 @@
-const { rmComma, jidToNum, getVars, setVar } = require('../library/function');
+const { rmComma, jidToNum, getVars, setVar } = require("../library/function");
 
 module.exports = {
-    name: 'sudo',
-    description: 'Manage sudo users',
-    category: 'tools'
-        async execute(sock, m, args) {
-        const messageText = m.text || "";
-        const fromMe = m.key.fromMe; // check if the sender is the bot owner
-        const quotedJid = m.quoted ? m.quoted.sender : null;
-        const mentionJid = m.mentionedJid ? m.mentionedJid[0] : null;
-
-        const command = messageText.split(' ')[0].replace('.', '').toLowerCase(); // .setsudo, .delsudo, .getsudo
-        let match = messageText.replace(`.${command}`, '').trim();
-
-        match = jidToNum(quotedJid || mentionJid || match);
-
-        if ((command === 'setsudo' || command === 'delsudo') && !fromMe) {
-            return sock.sendMessage(m.chat, { text: 'Only the bot owner can use this command.' }, { quoted: m });
-        }
-
+    command: "sudo",
+    category: "owner",
+    description: "Manage bot SUDO users (setsudo, delsudo, getsudo)",
+    owner: true, // only bot owner can use
+    async execute(sock, m, { args, reply, isCreator }) {
         try {
+            const subCmd = (args[0] || "").toLowerCase();
+            const target =
+                jidToNum(
+                    m.quoted?.sender ||
+                    m.mentionedJid?.[0] ||
+                    args[1]
+                );
+
+            // Load vars
             const vars = await getVars(m.id);
-            if (command === 'setsudo') {
-                if (!match) return sock.sendMessage(m.chat, { text: 'Example: .setsudo 9876543210 | mention | reply' }, { quoted: m });
-                const SUDO = rmComma(`${vars.SUDO || ''},${match}`);
-                await setVar({ SUDO }, m.id);
-                return sock.sendMessage(m.chat, { text: `New SUDO Numbers are: ${SUDO}` }, { quoted: m });
-            }
+            let sudoList = vars.SUDO || "";
 
-            if (command === 'delsudo') {
-                if (!match) return sock.sendMessage(m.chat, { text: 'Example: .delsudo 9876543210 | mention | reply' }, { quoted: m });
-                const SUDO = rmComma(vars.SUDO.replace(match, ''));
-                await setVar({ SUDO }, m.id);
-                return sock.sendMessage(m.chat, { text: `New SUDO Numbers are: ${SUDO}` }, { quoted: m });
-            }
+            switch (subCmd) {
+                case "add":
+                case "set":
+                case "setsudo": {
+                    if (!isCreator) return; // only owner
+                    if (!target)
+                        return reply("📌 Example:\n.sudo add 9876543210\nor reply/mention the user.");
+                    const SUDO = rmComma(`${sudoList},${target}`);
+                    await setVar({ SUDO }, m.id);
+                    return reply(`✅ Added new sudo user.\n\n*Current SUDO:* ${SUDO}`);
+                }
 
-            if (command === 'getsudo') {
-                await sock.sendMessage(m.chat, { text: `SUDO Numbers are: ${vars.SUDO || 'None'}` }, { quoted: m });
+                case "del":
+                case "remove":
+                case "delsudo": {
+                    if (!isCreator) return;
+                    if (!target)
+                        return reply("📌 Example:\n.sudo del 9876543210\nor reply/mention the user.");
+                    const SUDO = rmComma(sudoList.replace(target, ""));
+                    await setVar({ SUDO }, m.id);
+                    return reply(`❌ Removed sudo user.\n\n*Current SUDO:* ${SUDO}`);
+                }
+
+                case "list":
+                case "get":
+                case "getsudo":
+                default: {
+                    if (!sudoList) return reply("⚠️ No sudo users found.");
+                    return reply(`🗿 *SUDO Users:*\n${sudoList.split(",").join("\n")}`);
+                }
             }
         } catch (err) {
-            return sock.sendMessage(m.chat, { text: err.message }, { quoted: m });
+            console.error(err);
+            reply(`❌ Error: ${err.message}`);
         }
-    }
+    },
 };
