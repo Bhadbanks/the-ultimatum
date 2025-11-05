@@ -4,7 +4,7 @@ const FileType = require('file-type');
 module.exports = {
   command: 'mediatag',
   category: 'group',
-  description: 'Reply to any media (image, video, sticker, viewonce) and tag all members',
+  description: '```tag everyone to a media```',
   group: true,
 
   async execute(sock, m, ctx) {
