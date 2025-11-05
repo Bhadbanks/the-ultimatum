@@ -1,53 +1,53 @@
-
-const fs = require('fs');
-
+// plugins/tag.js
 module.exports = {
   command: 'tag',
-  description: 'Tag everyone in group with message',
+  description: 'Tag everyone in the group. Usage: .tag <text> or reply to a message with .tag',
   category: 'group',
-  group: true,
-  admin: true,
-  owner: true,
+  owner: false,
+  admin: false,
   execute: async (sock, m, opts) => {
     try {
-      const {
-        args,
-        text,
-        q, // text joined
-        quoted,
-        participants = [],
-        prefix,
-        reply,
-      } = opts;
+      // m: message object
+      // opts: { args, text, q, quoted, participants, prefix, reply, ... }
+      const { text = '', quoted, participants = [], prefix = '.', reply } = opts;
 
-      // Ensure group (pluginLoader already prevents non-group, but safe-guard)
-      if (!m.isGroup) return;
+      const from = m.key?.remoteJid || m.chat || '';
+      const isGroup = String(from).endsWith('@g.us');
 
-      const mentions = participants.map(p => p.id).filter(Boolean);
-
-      // If user provided text after .tag
-      if (text && text.trim().length > 0) {
-        const caption = text.trim();
-        await sock.sendMessage(m.chat, {
-          text: caption,
-          contextInfo: { mentionedJid: mentions }
-        }, { quoted: m });
+      if (!isGroup) {
+        // politely inform if used in private chat
+        await sock.sendMessage(m.chat, { text: `This command only works in groups.` }, { quoted: m });
         return;
       }
 
-      // If replying to a message: quote it and mention everyone
+      // build mentions (use participants passed by your message handler)
+      const mentions = Array.isArray(participants)
+        ? participants.map(p => p.id).filter(Boolean)
+        : [];
+
+      // if reply to a message => quote it and mention everyone (works for media)
       if (m.quoted) {
-        // send a small text that only mentions everyone, quoting the original message
-        // quoting the original will make the original message visible (works for media)
+        // We quote the replied message so recipients see original content
         await sock.sendMessage(m.chat, {
-          text: ' ',
+          text: ' ', // empty text but the mentionedJid will notify
           contextInfo: { mentionedJid: mentions }
         }, { quoted: m.quoted });
         return;
       }
 
-      // No args and not a reply -> usage
-      await reply(`Usage:\n${prefix}tag <message>\nor reply to a message with ${prefix}tag to tag everyone in that message.`);
+      // if user provided text after .tag
+      if (text && text.trim().length > 0) {
+        await sock.sendMessage(m.chat, {
+          text: text.trim(),
+          contextInfo: { mentionedJid: mentions }
+        }, { quoted: m });
+        return;
+      }
+
+      // else show usage
+      const usage = `Usage:\n${prefix}tag <message>\nOr reply to a message with ${prefix}tag to tag everyone.`;
+      if (typeof reply === 'function') return reply(usage);
+      await sock.sendMessage(m.chat, { text: usage }, { quoted: m });
     } catch (err) {
       console.error('tag plugin error:', err);
     }
