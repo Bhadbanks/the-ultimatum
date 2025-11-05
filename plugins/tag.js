@@ -1,7 +1,7 @@
 // plugins/tag.js
 module.exports = {
   command: "tag",
-  description: "Tag everyone in the group with an optional message or reply.",
+  description: "```Tag everyone in the group with a msg/media```",
   category: "group",
   owner: false,
   admin: false,
