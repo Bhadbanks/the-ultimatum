@@ -3,7 +3,7 @@ const FileType = require('file-type');
 module.exports = {
   command: 'mediatag',
   category: 'group',
-  description: '```Reply to a media to tag```',
+  description: 'Reply to a media message and tag everyone while resending that media',
   group: true,
 
   async execute(sock, m, ctx) {
@@ -17,55 +17,61 @@ module.exports = {
 
       if (!quoted) return reply('⚠️ Reply to a media message.\nExample: reply with `.mediatag`');
 
-      // 🧠 unwrap viewOnce or ephemeral layers
+      // Unwrap nested Baileys layers (viewOnce, ephemeral, etc.)
       let msg = quoted.message;
-      while (
-        msg &&
-        typeof msg === 'object' &&
-        !Object.keys(msg).some(k => /image|video|sticker|audio|document/i.test(k))
-      ) {
+      while (msg && typeof msg === 'object' && !Object.keys(msg).some(k => /(image|video|sticker|audio|document)Message/i.test(k))) {
         msg = Object.values(msg)[0];
       }
 
-      if (!msg) return reply('⚠️ This message does not contain media.');
+      if (!msg) return reply('⚠️ No valid media found in this message.');
 
-      // 🧩 Determine the actual message type (image/video/sticker/etc)
-      const type = Object.keys(msg).find(k => /image|video|sticker|audio|document/i.test(k));
-      if (!type) return reply('⚠️ Unsupported or missing media.');
+      const type = Object.keys(msg).find(k => /(image|video|sticker|audio|document)Message/i.test(k));
+      if (!type) return reply('⚠️ Unsupported or invalid media type.');
 
-      // 🧾 Download the actual content
-      const buffer = await sock.downloadMediaMessage(quoted).catch(() => null);
+      const content = msg[type];
+      const buffer = await sock.downloadMediaMessage({ message: { [type]: content } }).catch(() => null);
       if (!buffer) return reply('⚠️ Failed to download media.');
 
-      // 🏷 Caption if any
-      const caption =
-        msg[type]?.caption ||
-        msg.caption ||
-        '';
-
-      // 🔎 Detect file type for proper sending
       const detected = (await FileType.fromBuffer(buffer).catch(() => null)) || {};
-      const mime = detected.mime || '';
-      const payload = { mentions: mentioned };
+      const mime = detected.mime || content.mimetype || '';
+      const caption = content.caption || '';
 
-      if (/sticker/i.test(type) || /webp/i.test(mime)) {
-        payload.sticker = buffer;
-      } else if (/image/i.test(type)) {
+      let payload = { mentions: mentioned };
+
+      // Image
+      if (/image/i.test(type)) {
         payload.image = buffer;
         if (caption) payload.caption = caption;
-      } else if (/video/i.test(type)) {
+      }
+
+      // Video
+      else if (/video/i.test(type)) {
         payload.video = buffer;
         if (caption) payload.caption = caption;
-      } else if (/audio/i.test(type)) {
+      }
+
+      // Audio
+      else if (/audio/i.test(type)) {
         payload.audio = buffer;
         payload.mimetype = mime || 'audio/mpeg';
-      } else if (/document/i.test(type)) {
+      }
+
+      // Sticker
+      else if (/sticker/i.test(type) || /webp/i.test(mime)) {
+        payload.sticker = buffer;
+      }
+
+      // Document
+      else if (/document/i.test(type)) {
         payload.document = buffer;
-        payload.fileName = msg[type]?.fileName || 'file';
-      } else {
+        payload.fileName = content.fileName || `file.${detected.ext || 'bin'}`;
+      }
+
+      else {
         return reply('⚠️ Unsupported media type.');
       }
 
+      // 🚀 Send the message with mentions
       await sock.sendMessage(m.chat, payload, { quoted: m });
 
     } catch (err) {
