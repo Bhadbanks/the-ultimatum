@@ -1,7 +1,7 @@
 // plugins/tag.js
 module.exports = {
   command: "tag",
-  description: "```Tag everyone in the group with a msg/media```.",
+  description: "```Tag everyone in gc with text/media```",
   category: "group",
 
   execute: async (sock, m, { text, participants, reply }) => {
