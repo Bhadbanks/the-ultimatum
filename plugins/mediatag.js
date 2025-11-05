@@ -1,77 +1,46 @@
 // plugins/mediatag.js
-const FileType = require('file-type');
-
 module.exports = {
   command: 'mediatag',
   category: 'group',
-  description: '```tag everyone to a media```',
+  description: '```Reply a media to tag```',
   group: true,
 
-  async execute(sock, m, ctx) {
+  async execute(sock, m, { quoted, participants, reply }) {
     try {
-      const { quoted, participants = [], reply } = ctx;
-
       if (!m.isGroup) return reply('❌ This command only works in groups.');
+
       const mentioned = participants.map(p => p.id).filter(Boolean);
+      if (!quoted) return reply('⚠️ Reply to a media message.');
 
-      if (!quoted) return reply('⚠️ Reply to a media message to tag everyone.');
-
-      // --- Extract the real message ---
-      let target = quoted.message || {};
-      let type = Object.keys(target)[0];
-
-      // Handle view-once messages (wrapped message)
-      if (type === 'viewOnceMessageV2' || type === 'viewOnceMessage') {
-        target = target[type].message;
-        type = Object.keys(target)[0];
+      // Deep media extraction
+      let msg = quoted.message;
+      while (msg && typeof msg === 'object' && !Object.keys(msg).some(k => /image|video|sticker|audio|document/i.test(k))) {
+        msg = Object.values(msg)[0]; // unwrap layers (viewOnce, ephemeral, etc)
       }
 
-      // If not media
-      if (!/image|video|audio|sticker|document/i.test(type)) {
-        return reply('⚠️ That message doesn’t contain media.');
-      }
+      if (!msg) return reply('⚠️ Could not find any media in this message.');
 
-      // --- Download media ---
+      const type = Object.keys(msg).find(k => /image|video|sticker|audio|document/i.test(k));
+      if (!type) return reply('⚠️ That message doesn’t contain any media.');
+
+      //  Download media
       const buffer = await sock.downloadMediaMessage(quoted).catch(() => null);
-      if (!buffer) return reply('⚠️ Could not download media.');
+      if (!buffer) return reply('⚠️ Failed to download media.');
 
-      const detected = await FileType.fromBuffer(buffer).catch(() => null);
-      const mime = detected?.mime || 'application/octet-stream';
-      const caption = target[type]?.caption || '';
+      const caption = msg[type]?.caption || '';
 
-      let sendContent = {};
+      //  Send with mentions
+      const options = { mentions: mentioned };
+      if (/image/i.test(type)) await sock.sendMessage(m.chat, { image: buffer, caption, ...options }, { quoted: m });
+      else if (/video/i.test(type)) await sock.sendMessage(m.chat, { video: buffer, caption, ...options }, { quoted: m });
+      else if (/sticker/i.test(type)) await sock.sendMessage(m.chat, { sticker: buffer, ...options }, { quoted: m });
+      else if (/audio/i.test(type)) await sock.sendMessage(m.chat, { audio: buffer, mimetype: 'audio/mp4', ptt: false, ...options }, { quoted: m });
+      else if (/document/i.test(type)) await sock.sendMessage(m.chat, { document: buffer, fileName: 'file', ...options }, { quoted: m });
+      else return reply('⚠️ Unsupported media type.');
 
-      // Stickers
-      if (type.includes('stickerMessage')) {
-        sendContent = { sticker: buffer };
-      }
-
-      // Image
-      else if (mime.startsWith('image/')) {
-        sendContent = { image: buffer, caption };
-      }
-
-      // Video
-      else if (mime.startsWith('video/')) {
-        sendContent = { video: buffer, caption };
-      }
-
-      // Audio
-      else if (mime.startsWith('audio/')) {
-        sendContent = { audio: buffer, mimetype: mime, ptt: false };
-      }
-
-      // Documents
-      else if (mime.startsWith('application/')) {
-        sendContent = { document: buffer, fileName: `file.${detected?.ext || 'bin'}` };
-      }
-
-      // --- Add mentions & send silently ---
-      sendContent.mentions = mentioned;
-      await sock.sendMessage(m.chat, sendContent, { quoted: m });
     } catch (err) {
       console.error('❌ mediatag error:', err);
-      await ctx.reply('⚠️ Error while tagging media.');
+      reply('⚠️ Error while tagging media.');
     }
-  },
+  }
 };
