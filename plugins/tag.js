@@ -1,49 +1,55 @@
+
+const fs = require('fs');
+
 module.exports = {
   command: 'tag',
+  description: 'Tag everyone in group with message',
   category: 'group',
-  description: 'Tag all group members with or without message/media (silent mode)',
-
-  async execute(sock, m, { text, quoted, isGroup, participants, reply }) {
-    if (!isGroup) return reply('❌ This command only works in groups.');
-
-    const mentionIds = participants.map(p => p.id);
-
-    // If user provides a message
-    if (text) {
-      return await sock.sendMessage(m.chat, {
+  group: true,
+  admin: true,
+  owner: true,
+  execute: async (sock, m, opts) => {
+    try {
+      const {
+        args,
         text,
-        mentions: mentionIds
-      }, { quoted: m });
-    }
+        q, // text joined
+        quoted,
+        participants = [],
+        prefix,
+        reply,
+      } = opts;
 
-    // If user replies to something
-    if (quoted) {
-      const msgType = Object.keys(quoted.message)[0];
-      const content = quoted.message[msgType];
+      // Ensure group (pluginLoader already prevents non-group, but safe-guard)
+      if (!m.isGroup) return;
 
-      // If it's media (image/video/etc.)
-      if (
-        msgType.includes('image') ||
-        msgType.includes('video') ||
-        msgType.includes('sticker') ||
-        msgType.includes('document')
-      ) {
-        const buffer = await quoted.download();
-        return await sock.sendMessage(m.chat, {
-          [msgType.replace('Message', '')]: buffer,
-          caption: quoted.text || '',
-          mentions: mentionIds
+      const mentions = participants.map(p => p.id).filter(Boolean);
+
+      // If user provided text after .tag
+      if (text && text.trim().length > 0) {
+        const caption = text.trim();
+        await sock.sendMessage(m.chat, {
+          text: caption,
+          contextInfo: { mentionedJid: mentions }
         }, { quoted: m });
-      } else {
-        // Text-only reply
-        return await sock.sendMessage(m.chat, {
-          text: quoted.text || '',
-          mentions: mentionIds
-        }, { quoted: m });
+        return;
       }
-    }
 
-    // If neither message nor reply
-    return reply('⚠️ Please reply to a message/media or use `.tag <message>`');
+      // If replying to a message: quote it and mention everyone
+      if (m.quoted) {
+        // send a small text that only mentions everyone, quoting the original message
+        // quoting the original will make the original message visible (works for media)
+        await sock.sendMessage(m.chat, {
+          text: ' ',
+          contextInfo: { mentionedJid: mentions }
+        }, { quoted: m.quoted });
+        return;
+      }
+
+      // No args and not a reply -> usage
+      await reply(`Usage:\n${prefix}tag <message>\nor reply to a message with ${prefix}tag to tag everyone in that message.`);
+    } catch (err) {
+      console.error('tag plugin error:', err);
+    }
   }
 };
