@@ -17,7 +17,7 @@ function loadDB() {
 
 module.exports = {
   command: 'alive',
-  description: 'Show alive message (set with .setalive).',
+  description: '```Show uptime```',
   category: 'general',
   owner: false,
   execute: async (sock, m, opts) => {
