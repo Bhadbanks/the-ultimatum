@@ -28,7 +28,7 @@ function saveDB(obj) {
 
 module.exports = {
   command: 'setalive',
-  description: 'Owner only. Set alive text and optional image. Usage: .setalive <text> #uptime #imageUrl <url>',
+  description: '```set custom alive(uptime) msg```',
   category: 'owner',
   owner: true,
   execute: async (sock, m, opts) => {
