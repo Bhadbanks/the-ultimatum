@@ -4,73 +4,70 @@ const FileType = require('file-type');
 module.exports = {
   command: 'mediatag',
   category: 'group',
-  description: 'Reply to a media message and tag everyone while resending that media',
+  description: '```Reply to a media to tag```',
   group: true,
 
   async execute(sock, m, ctx) {
     try {
-      const { quoted, qmsg, isMedia, participants = [], reply } = ctx;
+      const { quoted, qmsg, participants = [], reply } = ctx;
 
-      // Must be used in group
       if (!m.isGroup) return reply('❌ This command is for groups only.');
-
-      // Build mention list (array of jids)
       const mentioned = participants.map(p => p.id).filter(Boolean);
-      if (mentioned.length === 0) return reply('⚠️ No participants found to tag.');
+      if (!quoted && !qmsg) return reply('⚠️ Reply to a media message to tag everyone.');
 
-      // Prefer the quoted message (reply). If not replying, check if user sent media with command.
-      const target = qmsg || quoted || null;
+      const target = qmsg || quoted;
 
-      if (!target || !isMedia) {
-        return reply('⚠️ Reply to a media message with `.mediatag` or send media with the command.\nExample: reply an image -> `.mediatag`');
+      // Check for media
+      const typeKey = Object.keys(target.message || {})[0];
+      if (!typeKey || !/image|video|audio|sticker|document/i.test(typeKey)) {
+        return reply('⚠️ That message doesn’t contain media.');
       }
 
-      // Download the media buffer using your sock helper (index.js defines sock.downloadMediaMessage)
-      const buffer = await sock.downloadMediaMessage(target).catch(err => {
-        throw new Error('Failed to download media: ' + (err?.message || err));
-      });
+      // Download media buffer
+      const buffer = await sock.downloadMediaMessage(target).catch(() => null);
+      if (!buffer) return reply('⚠️ Failed to download the media.');
 
-      if (!buffer || !Buffer.isBuffer(buffer)) {
-        return reply('⚠️ Could not read media content.');
+      const detected = await FileType.fromBuffer(buffer).catch(() => null);
+      const mime = detected?.mime || 'application/octet-stream';
+      let sendContent = {};
+      const caption =
+        target.message?.[typeKey]?.caption || '';
+
+      // Handle sticker properly
+      if (typeKey.includes('stickerMessage')) {
+        sendContent = { sticker: buffer };
       }
 
-      // Detect file type so we can send appropriate field
-      const type = await FileType.fromBuffer(buffer).catch(() => null) || { ext: 'bin', mime: 'application/octet-stream' };
-      const mime = type.mime || '';
-      let messagePayload = {};
-      const caption = (target?.message?.imageMessage?.caption)
-        || (target?.message?.videoMessage?.caption)
-        || (target?.message?.documentMessage?.fileName && '') // leave blank if not provided
-        || '';
-
-      if (/image\/(jpe?g|png|webp|gif)/i.test(mime)) {
-        messagePayload = { image: buffer, caption };
-      } else if (/video\//i.test(mime)) {
-        messagePayload = { video: buffer, caption };
-      } else if (/audio\//i.test(mime)) {
-        // send as audio (not ptt). If you want ptt, set ptt:true
-        messagePayload = { audio: buffer, mimetype: mime, ptt: false };
-      } else if (/webp/i.test(mime) && target?.message?.stickerMessage) {
-        // sticker (webp) — resend as sticker
-        messagePayload = { sticker: buffer };
-      } else {
-        // fallback: send as document
-        const filename = `file.${type.ext || 'bin'}`;
-        messagePayload = { document: buffer, fileName: filename, caption };
+      // Handle image/video/audio/document
+      else if (mime.startsWith('image/')) {
+        sendContent = { image: buffer, caption };
+      } else if (mime.startsWith('video/')) {
+        sendContent = { video: buffer, caption };
+      } else if (mime.startsWith('audio/')) {
+        sendContent = { audio: buffer, mimetype: mime, ptt: false };
+      } else if (mime.startsWith('application/')) {
+        sendContent = { document: buffer, fileName: `file.${detected?.ext || 'bin'}` };
       }
 
-      // Add mentions
-      messagePayload.mentions = mentioned;
+      // Handle view-once media (recreate as viewOnceMessage)
+      if (typeKey === 'viewOnceMessageV2' || typeKey === 'viewOnceMessage') {
+        const inner = target.message?.[typeKey]?.message || {};
+        const innerType = Object.keys(inner)[0];
+        sendContent = {
+          viewOnce: true,
+          [innerType.replace('Message', '')]: await sock.downloadMediaMessage(target),
+          caption: inner?.[innerType]?.caption || caption,
+        };
+      }
 
-      // Send it quoting the original command message (or you can quote the replied media). I quote `m` so it's clear who triggered it.
-      await sock.sendMessage(m.chat, messagePayload, { quoted: m });
+      // Tag everyone
+      sendContent.mentions = mentioned;
 
-      // Confirm
-      await reply(`✅ Tagged ${mentioned.length} members with the media.`);
-    } catch (err) {
-      console.error('mediatag error:', err);
-      // use ctx.reply if available, else fallback to console
-      try { await (ctx.reply ? ctx.reply('❌ Error: ' + (err.message || err)) : null); } catch {}
+      // Send silently
+      await sock.sendMessage(m.chat, sendContent, { quoted: m });
+    } catch (e) {
+      console.error('❌ mediatag error:', e);
+      await ctx.reply('⚠️ Error while tagging media.');
     }
-  }
+  },
 };
