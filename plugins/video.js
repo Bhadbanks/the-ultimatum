@@ -3,7 +3,7 @@ const yts = require('yt-search');
 
 module.exports = {
     command: 'video',
-    description: 'Quick YouTube video download',
+    description: '```Quick YouTube video download```',
     category: 'downloader',
     execute: async (sock, m, {
         args,
