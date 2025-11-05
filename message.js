@@ -328,7 +328,7 @@ module.exports = sock = async (sock, m, chatUpdate, store) => {
                 const pluginMenuSections = pluginLoader.getMenuSections();
                 const totalCommands = pluginLoader.getPluginCount();
 
-                const K0MRAID = `
+                const IMLOWKEY = `
 ╔〘 *༺𝕿𝖍𝖊 𝕴𝖑𝖙𝖎𝖒𝖆𝖙𝖚𝖒༻* 
 ║ 👑 *Owner:* ༺𝕷𝖔𝖜𝖐𝖊𝖞 𝕴𝖘 𝕳𝖎𝖒༻ᵀʰᵉ ᵁˡᵗᶦᵐᵃᵗᵘᵐ
 ║ 🧩 *Prefix:* [ ${prefix} ]
@@ -351,12 +351,12 @@ ${pluginMenuSections}`;
                         forwardingScore: 1,
                         isForwarded: false,
                         externalAdReply: {
-                            title: "Simple WA Base Bot",
+                            title: "Light weight | premium | fast",
                             body: "Official Dev Account URL",
                             mediaType: 3,
                             thumbnailUrl: config.thumbUrl,
-                            mediaUrl: "https://t.me/debrajzero",
-                            sourceUrl: "https://t.me/debrajzero",
+                            mediaUrl: "https://t.me/im_just_lowkey",
+                            sourceUrl: "https://t.me/im_just_lowkey",
                             showAdAttribution: true,
                             renderLargerThumbnail: false
                         }
@@ -387,3 +387,4 @@ require('fs').watchFile(file, () => {
     require(file);
 
 });
+
