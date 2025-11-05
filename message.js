@@ -345,7 +345,7 @@ ${pluginMenuSections}`;
 
                 await sock.sendMessage(m.chat, {
                     image: image,
-                    caption: K0MRAID,
+                    caption: IMLOWKEY,
                     contextInfo: {
                         mentionedJid: [m.sender],
                         forwardingScore: 1,
@@ -387,4 +387,5 @@ require('fs').watchFile(file, () => {
     require(file);
 
 });
+
 
