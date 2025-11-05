@@ -29,7 +29,7 @@ module.exports = {
     }) => {
         try {
             if (!text) {
-                return await reply(`🎧 *༺𝕿𝖍𝖊 𝕴𝖑𝖙𝖎𝖒𝖆𝖙𝖚𝖒༻*\n\n┌─❖\n│ ✦ Need a song name!\n│ ✦ Example: ${prefix}play faded alan walker\n└───────────────◉\n\n🎶 Your personal music downloader`);
+                return await reply(`🎧 *༺𝕿𝖍𝖊 𝕴𝖑𝖙𝖎𝖒𝖆𝖙𝖚𝖒༻*\n\n┌─❖\n│ ✦ Need a song name!\n│ ✦ Example: ${prefix}play Celine Dion Zinoleesky\n└───────────────◉`);
             }
 
             // Initial reaction - music note
