@@ -103,8 +103,8 @@ module.exports = {
                 contextInfo: {
                     mentionedJid: [sender],
                     externalAdReply: {
-                        title: "🎧 Queen Riam Music",
-                        body: "Click here for more music!",
+                        title: "🎧 ༺𝕿𝖍𝖊 𝕴𝖑𝖙𝖎𝖒𝖆𝖙𝖚𝖒༻",
+                        body: "by: ༺𝕷𝖔𝖜𝖐𝖊𝖞 𝕴𝖘 𝕳𝖎𝖒༻ᵀʰᵉ ᵁˡᵗᶦᵐᵃᵗᵘᵐ!",
                         thumbnailUrl: video.thumbnail,
                         sourceUrl: "",
                         mediaType: 1
