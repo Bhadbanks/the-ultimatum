@@ -1,13 +1,10 @@
 
-// 漏 2025 Debraj. All Rights Reserved.
-// respect the work, don鈥檛 just copy-paste.
-
 const fs = require('fs')
 
 const config = {
     owner: "-",
     botNumber: "-",
-    setPair: "K0MRAID1",
+    setPair: "IMLOWKEY",
     thumbUrl: "https://files.catbox.moe/alasef.jpeg",
     session: "sessions",
     status: {
