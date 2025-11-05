@@ -3,7 +3,7 @@ const axios = require('axios');
 
 module.exports = {
     command: 'play',
-    description: '```Download/play YouTube music```',
+    description: '```Download/play music```',
     category: 'downloader',
     execute: async (sock, m, {
         args,
