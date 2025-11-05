@@ -1,6 +1,6 @@
 module.exports = {
     command: 'ping',
-    description: 'Check bot response time',
+    description: '```Check bot response time```',
     category: 'general',
     execute: async (sock, m, {
         args,
