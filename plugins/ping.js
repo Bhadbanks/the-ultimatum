@@ -1,7 +1,7 @@
 module.exports = {
   command: 'ping',
   category: 'general',
-  description: 'Check bot response speed',
+  description: '```Check bot response speed```',
   async execute(sock, m, ctx) {
     try {
       const start = Date.now();
